@@ -5,19 +5,21 @@ const fsPromises = fs.promises;
 const stream = fs.createReadStream(path.join(__dirname, 'template.html'), 'utf-8');
 let data = '';
 stream.on('data', chunk => data += chunk);
+fs.rm(path.join(__dirname, 'project-dist'), {recursive: true, force: true}, () => {
+  fsPromises.mkdir(path.join(__dirname, 'project-dist'), { recursive: true })
+    .then(function() {
+      stream.on('end', () => {
+        buildTemplate();
+      });
 
-fsPromises.mkdir(path.join(__dirname, 'project-dist'), { recursive: true })
-  .then(function() {
-    stream.on('end', () => {
-      buildTemplate();
+      buildStyles();
+      copyDir('assets', path.join('project-dist', 'assets'));
+
+    }).catch(function() {
+      console.log('failed to create directory');
     });
+});
 
-    buildStyles();
-    copyDir('assets', path.join('project-dist', 'assets'));
-
-  }).catch(function() {
-    console.log('failed to create directory');
-  });
 
 let buildTemplate = ()=> {
   if(data.includes('{{') ) {
@@ -68,30 +70,11 @@ let buildStyles = ()=> {
 let copyDir = function(folder, copyFolder) {
   fsPromises.mkdir(path.join(__dirname, copyFolder), { recursive: true })
     .then(function() {
-      clearFolder(copyFolder);
       copyFiles(folder, copyFolder);
 
     }).catch(function() {
       console.log('failed to create directory');
     });
-};
-
-let clearFolder = (copyFolder)=> {
-  fs.readdir(path.join(__dirname, copyFolder), (err, files) => {
-    if(err) throw err;
-    files.forEach((file) => {
-      fs.stat(path.join(__dirname, copyFolder, file), (err, stats) => {
-        if(err) throw err;
-        if(stats.isFile()) {
-          fs.unlink(path.join(path.join(__dirname, copyFolder), file), (err) => {
-            if (err) throw err;
-          });
-        } else {
-          clearFolder(path.join(copyFolder, file));
-        }
-      });
-    });
-  });
 };
 
 let copyFiles = (folder, copyFolder)=> {
