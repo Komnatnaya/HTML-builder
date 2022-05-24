@@ -4,10 +4,11 @@ const fsPromises = fs.promises;
 
 const stream = fs.createReadStream(path.join(__dirname, 'template.html'), 'utf-8');
 let data = '';
-stream.on('data', chunk => data += chunk);
+
 fs.rm(path.join(__dirname, 'project-dist'), {recursive: true, force: true}, () => {
   fsPromises.mkdir(path.join(__dirname, 'project-dist'), { recursive: true })
     .then(function() {
+      stream.on('data', chunk => data += chunk);
       stream.on('end', () => {
         buildTemplate();
       });
