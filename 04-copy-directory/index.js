@@ -7,30 +7,33 @@ const fsPromises = fs.promises;
 let copyDir = function(folder, copyFolder) {
   fsPromises.mkdir(path.join(__dirname, copyFolder), { recursive: true })
     .then(function() {
-
-      fs.readdir(path.join(__dirname, copyFolder), (err, files) => {
-        if(err) throw err;
-        files.forEach((file) => {
-          fs.unlink(path.join(path.join(__dirname, copyFolder), file), (err) => {
-            if (err) throw err;
-          });
-        });
-      });
-
-      fs.readdir(path.join(__dirname, folder), (err, files) => {
-        if(err) throw err;
-        files.forEach((file) => {
-          fsPromises.copyFile(path.join(__dirname, folder, file), path.join(__dirname, copyFolder, file))
-            .then(function() {})
-            .catch(function(error) {
-              console.log(error);
-            });
-        });
-      });
+      copyFiles(folder, copyFolder);
 
     }).catch(function() {
       console.log('failed to create directory');
     });
 };
 
-copyDir('files', 'files-copy');
+let copyFiles = (folder, copyFolder)=> {
+  fs.readdir(path.join(__dirname, folder), (err, files) => {
+    if(err) throw err;
+    files.forEach((file) => {
+      fs.stat(path.join(__dirname, folder, file), (err, stats) => {
+        if(err) throw err;
+        if(stats.isFile()) {
+          fsPromises.copyFile(path.join(__dirname, folder, file), path.join(__dirname, copyFolder, file))
+            .then(function() {})
+            .catch(function(error) {
+              console.log(error);
+            });
+        } else {
+          copyDir(path.join(folder, file), path.join(copyFolder, file));
+        }
+      });
+    });
+  });
+};
+
+fs.rm(path.join(__dirname, 'files-copy'), {recursive: true, force: true}, () => {
+  copyDir('files', 'files-copy');
+});
