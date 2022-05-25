@@ -34,6 +34,7 @@ let copyFiles = (folder, copyFolder)=> {
   });
 };
 
-fs.rm(path.join(__dirname, 'files-copy'), {recursive: true, force: true}, () => {
+fs.rm(path.join(__dirname, 'files-copy'), {recursive: true, force: true}, (err) => {
+  if(err) throw err;
   copyDir('files', 'files-copy');
 });
